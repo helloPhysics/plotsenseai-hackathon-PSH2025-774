@@ -4,6 +4,34 @@ import streamlit as st
 from basic import run_basic_mode
 from godmode import run_god_mode
 
+# =======================================================
+# *** PLACE THIS IN YOUR MAIN STREAMLIT FILE (e.g., app.py) ***
+# =======================================================
+import streamlit as st
+# import godmode # if you import godmode
+
+# --- UNCONDITIONAL GLOBAL SESSION STATE INITIALIZATION ---
+# This block must be at the very top level of your script 
+# to ensure the keys exist before any imported code or callbacks run.
+
+if 'app_page' not in st.session_state:
+    st.session_state['app_page'] = 'selector' # or whatever your main page is
+
+# Initialize ALL keys that are accessed early, especially 'chat_history'
+if 'chat_history' not in st.session_state:
+    st.session_state['chat_history'] = [] 
+
+if 'fig' not in st.session_state:
+    st.session_state['fig'] = None
+# ... and any other keys the app needs immediately ...
+
+# --- END INITIALIZATION BLOCK ---
+
+# Now, call your main function (which might call godmode.run_god_mode())
+# if st.session_state.app_page == 'god':
+#    godmode.run_god_mode()
+
+
 # --- IMAGE DISPLAY (Only here in app.py) ---
 # This image will display once at the top of the entire application.
 st.image("assets/GraPhycs.png", width=1000)
