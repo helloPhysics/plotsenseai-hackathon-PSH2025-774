@@ -30,6 +30,7 @@ except ImportError:
 # ------------------------------------------------------------------------------
 # ⭐ CRITICAL FIX: SESSION STATE INITIALIZATION MUST BE HERE ⭐
 # All keys, especially 'chat_history', are initialized unconditionally at the top.
+# This prevents KeyErrors during Streamlit's reruns.
 # ------------------------------------------------------------------------------
 if 'app_page' not in st.session_state:
     st.session_state['app_page'] = 'god'
