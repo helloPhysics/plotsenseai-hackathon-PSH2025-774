@@ -1,0 +1,8 @@
+streamlit
+numpy
+matplotlib
+scipy
+time
+os
+math
+plotsense
