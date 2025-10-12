@@ -28,13 +28,11 @@ except ImportError:
 # ------------------------------------------------------------------------------
 
 # ------------------------------------------------------------------------------
-# --- CRITICAL: SESSION STATE INITIALIZATION (MOVED TO TOP) ---
+# ⭐ CRITICAL FIX: SESSION STATE INITIALIZATION MUST BE HERE ⭐
+# All keys, especially 'chat_history', are initialized unconditionally at the top.
 # ------------------------------------------------------------------------------
-# All session state keys MUST be initialized here to prevent KeyErrors on script rerun.
-if 'app_page' not in st.session_state: # Add app_page initialization if used for routing
+if 'app_page' not in st.session_state:
     st.session_state['app_page'] = 'god'
-if 'chat_history' not in st.session_state:
-    st.session_state['chat_history'] = [] 
 if 'fig' not in st.session_state:
     st.session_state['fig'] = None
 if 'plotted' not in st.session_state:
@@ -59,6 +57,9 @@ if 'run_plotsense_explainer' not in st.session_state:
     st.session_state['run_plotsense_explainer'] = False
 if 'plotsense_explanation' not in st.session_state:
     st.session_state['plotsense_explanation'] = "" 
+# THIS IS THE KEY FIX: Ensuring it exists before data_input_sidebar_god() is called.
+if 'chat_history' not in st.session_state:
+    st.session_state['chat_history'] = [] 
 # ------------------------------------------------------------------------------
     
 # --- Constants ---
@@ -459,7 +460,6 @@ def data_input_sidebar_god():
         st.markdown("Enter comma-separated numbers.")
 
         st.subheader("X-Axis")
-        # Use initial values if keys don't exist yet (Streamlit handles this implicitly now)
         x_label = st.text_input("X-axis Label", value="Time", key=f"{mode_name}_x_label")
         x_unit = st.selectbox("X-axis Unit", options=PHYSICS_UNITS, index=1, key=f"{mode_name}_x_unit_select")
         x_input = st.text_input("Enter X values", value="1, 2, 3, 4, 5", key=f"{mode_name}_x_input")
@@ -487,14 +487,13 @@ def data_input_sidebar_god():
         
         st.markdown("---")
 
-        # --- NEW: AI Chat Feature UI ---
+        # --- AI Chat Feature UI ---
         st.subheader("GraPhycs Ai 💬")
         
         # Display chat history
         chat_placeholder = st.empty()
         with chat_placeholder.container():
-            # Only display the last few messages for space efficiency
-            # FIX: st.session_state['chat_history'] is now guaranteed to exist due to early init.
+            # This line is now safe due to the initialization at the top
             for message in st.session_state['chat_history'][-5:]:
                 st.chat_message(message["role"]).write(message['content'])
         
