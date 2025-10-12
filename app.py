@@ -6,7 +6,7 @@ from godmode import run_god_mode
 
 # --- IMAGE DISPLAY (Only here in app.py) ---
 # This image will display once at the top of the entire application.
-st.image("assets/Graphycs.png", width=1000)
+st.image("assets/GraPhycs.png", width=1000)
 
 # --- Configuration and Initialization ---
 st.set_page_config(page_title="GraPhycs3:Your Ai Physics experiment assistant", layout="wide")
