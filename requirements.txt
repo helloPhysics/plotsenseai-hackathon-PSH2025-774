@@ -3,3 +3,6 @@ numpy
 matplotlib
 scipy
 groq
+pandas
+plotsense
+groq
