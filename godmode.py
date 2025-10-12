@@ -57,7 +57,6 @@ if 'run_plotsense_explainer' not in st.session_state:
     st.session_state['run_plotsense_explainer'] = False
 if 'plotsense_explanation' not in st.session_state:
     st.session_state['plotsense_explanation'] = "" 
-# THIS IS THE KEY FIX: Ensuring it exists before data_input_sidebar_god() is called.
 if 'chat_history' not in st.session_state:
     st.session_state['chat_history'] = [] 
 # ------------------------------------------------------------------------------
@@ -102,7 +101,7 @@ PRESET_EXPERIMENTS = {
         'theoretical_grad': 10.0, 
         'x_data': "0.1, 0.2, 0.3, 0.4, 0.5",
         'y_data': "1.02, 1.98, 3.05, 3.95, 5.01",
-        'context': "The gradient of this graph represents the Resistance (R) of the component in Ohms ($\Omega$).",
+        'context': "The gradient of this graph represents the Resistance (R) of the component in Ohms ($\\Omega$).",
     }
 }
 # -----------------------------------------------
@@ -438,6 +437,7 @@ def data_input_sidebar_god():
             st.markdown("---")
             st.subheader("🤖 AI Configuration (Groq)")
             
+            # The key is stored in session state for cross-function access
             GROQ_API_KEY_INPUT = st.text_input(
                 "Groq API Key (Llama/Mixtral)",
                 value="", 
@@ -460,6 +460,7 @@ def data_input_sidebar_god():
         st.markdown("Enter comma-separated numbers.")
 
         st.subheader("X-Axis")
+        # Ensure keys are used for text inputs to allow preset loading to update them
         x_label = st.text_input("X-axis Label", value="Time", key=f"{mode_name}_x_label")
         x_unit = st.selectbox("X-axis Unit", options=PHYSICS_UNITS, index=1, key=f"{mode_name}_x_unit_select")
         x_input = st.text_input("Enter X values", value="1, 2, 3, 4, 5", key=f"{mode_name}_x_input")
@@ -493,7 +494,7 @@ def data_input_sidebar_god():
         # Display chat history
         chat_placeholder = st.empty()
         with chat_placeholder.container():
-            # This line is now safe due to the initialization at the top
+            # Display last few messages
             for message in st.session_state['chat_history'][-5:]:
                 st.chat_message(message["role"]).write(message['content'])
         
@@ -607,9 +608,11 @@ def plot_god_graph(x_str, y_str, x_label, y_label, x_unit_label, y_unit_label, s
         fit_func, popt, all_grad_info = fit_non_linear(x_np, y_np, selected_model_key, all_grad_info)
         
         if fit_func and popt is not None:
+            # Create smooth line for non-linear fit
             x_fit = np.linspace(x_np.min(), x_np.max(), 500)
             y_fit = fit_func(x_fit, *popt)
             model_name_short = selected_model_key.capitalize()
+            # Filter out NaNs/Infs that can occur in fitting domain issues
             valid_indices = np.isfinite(y_fit)
             ax.plot(x_fit[valid_indices], y_fit[valid_indices], 'g-', linewidth=2, label=f'{model_name_short} Fit')
             
@@ -621,6 +624,7 @@ def plot_god_graph(x_str, y_str, x_label, y_label, x_unit_label, y_unit_label, s
         elif not y_unit: grad_unit_display = f"$\\frac{{1}}{{{x_unit}}}$"
         else: grad_unit_display = f"$\\frac{{{y_unit}}}{{{x_unit}}}$"
         
+        # If the user selected linear and didn't hit the gradient button, show the regression line
         if selected_model_key == 'linear':
             clear_non_data_lines(ax)
             ax.plot(x_np, linear_intercept + linear_slope * x_np, 'r-', label=f'Linear Regression (m: {linear_slope:.4f})')
@@ -683,10 +687,10 @@ def run_god_mode():
         elif not y_unit_symbol: current_grad_unit = f"$\\frac{{1}}{{{x_unit_symbol}}}$"
         else: current_grad_unit = f"$\\frac{{{y_unit_symbol}}}{{{x_unit_symbol}}}$"
         
-        st.pyplot(st.session_state['fig']) # Draw the plot (this does not reset the zoom/pan on subsequent runs)
+        st.pyplot(st.session_state['fig']) # Draw the plot
         st.markdown("---")
         
-        # --- PlotSense Explanation Display and Button ---
+        # --- Action Buttons ---
         col_calc, col_plotsense, col_down, _ = st.columns([2, 2, 2, 2])
         
         with col_plotsense:
@@ -724,11 +728,13 @@ def run_god_mode():
         
         st.markdown("---")
         
+        # --- AI Output Display ---
         if st.session_state.get('plotsense_explanation'): 
             st.markdown("## PlotSense AI Interpretation 🧠 (Powered by Groq)")
             st.markdown(st.session_state['plotsense_explanation'])
             st.markdown("---")
         
+        # --- Calculation/Fit Output Display ---
         if st.session_state['gradient_markdown']:
             st.markdown(st.session_state['gradient_markdown'], unsafe_allow_html=True)
             st.markdown("---")
