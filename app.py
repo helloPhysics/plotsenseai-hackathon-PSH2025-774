@@ -9,7 +9,7 @@ from godmode import run_god_mode
 st.image("assets/Graphycs.png", width=1000)
 
 # --- Configuration and Initialization ---
-st.set_page_config(page_title="GAaphycs: Basic vs God Mode", layout="wide")
+st.set_page_config(page_title="GraPhycs3:Your Ai Physics experiment assistant", layout="wide")
 
 st.title("Graphycs 📊")
 st.subheader("Physics Experiment Data Graph Plotter")

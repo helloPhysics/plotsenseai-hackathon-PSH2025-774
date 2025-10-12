@@ -118,10 +118,10 @@ if 'linear_r_squared' not in st.session_state:
     st.session_state['linear_r_squared'] = 0.0
 if 'linear_slope_for_ai' not in st.session_state:
     st.session_state['linear_slope_for_ai'] = 0.0
-# --- FIX: NEW FLAG FOR PRESET PLOT TRIGGER ---
+# --- FLAG FOR PRESET PLOT TRIGGER ---
 if 'trigger_plot_on_load' not in st.session_state:
     st.session_state['trigger_plot_on_load'] = False
-# --- NEW: AI Chat Feature State ---
+# --- AI Chat Feature State ---
 if 'chat_history' not in st.session_state:
     st.session_state['chat_history'] = [] 
 # ------------------------------------------------------------------------------
@@ -187,7 +187,7 @@ def load_preset_data():
         st.toast(f"Preset '{preset_key}' loaded! 🧪")
 
 
-# --- AI Chat Handler Functions (NEW) ---
+# --- AI Chat Handler Functions ---
 
 def get_chat_response(user_query, groq_key, x_label, y_label, x_unit, y_unit):
     """Generates an AI response based on the user query and current graph context."""
@@ -492,7 +492,7 @@ def data_input_sidebar_god():
         st.markdown("---")
 
         # --- NEW: AI Chat Feature UI ---
-        st.subheader("💬 Graph Tutor AI Chat")
+        st.subheader("GraPhycs Ai 💬")
         
         # Display chat history
         chat_placeholder = st.empty()
@@ -734,7 +734,7 @@ def run_god_mode():
         st.markdown("---")
         
         if st.session_state.get('plotsense_explanation'): 
-            st.markdown("## PlotSense AI Interpretation 🧠 (Powered by Groq)")
+            st.markdown("## PlotSense AI Interpretation 🧠")
             st.markdown(st.session_state['plotsense_explanation'])
             st.markdown("---")
         
