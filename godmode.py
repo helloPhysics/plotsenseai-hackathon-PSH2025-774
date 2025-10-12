@@ -7,7 +7,7 @@ from scipy.stats import linregress
 from scipy.optimize import curve_fit
 import io
 import time
-import os 
+import os
 import math 
 
 # --- Groq and PlotSense Setup ------------------------------------------------
@@ -25,6 +25,40 @@ try:
     PLOTSENSE_AVAILABLE = True
 except ImportError:
     PLOTSENSE_AVAILABLE = False
+# ------------------------------------------------------------------------------
+
+# ------------------------------------------------------------------------------
+# --- CRITICAL: SESSION STATE INITIALIZATION (MOVED TO TOP) ---
+# ------------------------------------------------------------------------------
+# All session state keys MUST be initialized here to prevent KeyErrors on script rerun.
+if 'app_page' not in st.session_state: # Add app_page initialization if used for routing
+    st.session_state['app_page'] = 'god'
+if 'chat_history' not in st.session_state:
+    st.session_state['chat_history'] = [] 
+if 'fig' not in st.session_state:
+    st.session_state['fig'] = None
+if 'plotted' not in st.session_state:
+    st.session_state['plotted'] = False
+if 'show_gradient' not in st.session_state:
+    st.session_state['show_gradient'] = False
+if 'gradient_markdown' not in st.session_state:
+    st.session_state['gradient_markdown'] = ""
+if 'selected_model' not in st.session_state:
+    st.session_state['selected_model'] = "None / Linear Regression"
+if 'preset_select' not in st.session_state:
+    st.session_state['preset_select'] = "Manual Input"
+if 'best_fit_equation' not in st.session_state:
+    st.session_state['best_fit_equation'] = ""
+if 'linear_r_squared' not in st.session_state:
+    st.session_state['linear_r_squared'] = 0.0
+if 'linear_slope_for_ai' not in st.session_state:
+    st.session_state['linear_slope_for_ai'] = 0.0
+if 'trigger_plot_on_load' not in st.session_state:
+    st.session_state['trigger_plot_on_load'] = False
+if 'run_plotsense_explainer' not in st.session_state:
+    st.session_state['run_plotsense_explainer'] = False
+if 'plotsense_explanation' not in st.session_state:
+    st.session_state['plotsense_explanation'] = "" 
 # ------------------------------------------------------------------------------
     
 # --- Constants ---
@@ -93,38 +127,6 @@ MODEL_FUNCTIONS = {
 }
 
 # ------------------------------------------------------------------------------
-# --- SESSION STATE INITIALIZATION ---
-# ------------------------------------------------------------------------------
-if 'run_plotsense_explainer' not in st.session_state:
-    st.session_state['run_plotsense_explainer'] = False
-if 'plotsense_explanation' not in st.session_state:
-    st.session_state['plotsense_explanation'] = "" 
-if 'fig' not in st.session_state:
-    st.session_state['fig'] = None
-if 'plotted' not in st.session_state:
-    st.session_state['plotted'] = False
-if 'show_gradient' not in st.session_state:
-    st.session_state['show_gradient'] = False
-if 'gradient_markdown' not in st.session_state:
-    st.session_state['gradient_markdown'] = ""
-if 'selected_model' not in st.session_state:
-    st.session_state['selected_model'] = "None / Linear Regression"
-if 'preset_select' not in st.session_state:
-    st.session_state['preset_select'] = "Manual Input"
-# Keys for enhanced AI context and decoupling
-if 'best_fit_equation' not in st.session_state:
-    st.session_state['best_fit_equation'] = ""
-if 'linear_r_squared' not in st.session_state:
-    st.session_state['linear_r_squared'] = 0.0
-if 'linear_slope_for_ai' not in st.session_state:
-    st.session_state['linear_slope_for_ai'] = 0.0
-# --- FLAG FOR PRESET PLOT TRIGGER ---
-if 'trigger_plot_on_load' not in st.session_state:
-    st.session_state['trigger_plot_on_load'] = False
-# --- AI Chat Feature State ---
-if 'chat_history' not in st.session_state:
-    st.session_state['chat_history'] = [] 
-# ------------------------------------------------------------------------------
 
 
 # --- Helper Functions (Local to this mode) ---
@@ -158,14 +160,13 @@ def switch_page_local(page_name):
     st.session_state['app_page'] = page_name
     clear_inputs_local()
 
-# --- PRESET LOADER (FIXED) ---
+# --- PRESET LOADER ---
 def load_preset_data():
     """Loads data and settings from the selected preset."""
     preset_key = st.session_state['preset_select']
     if preset_key != "Manual Input":
         data = PRESET_EXPERIMENTS[preset_key]
         
-        # --- FIX: Avoid modifying the button's session state directly ---
         # Reset the plot trigger flag
         st.session_state['trigger_plot_on_load'] = False 
         
@@ -181,7 +182,7 @@ def load_preset_data():
         model_display = [k for k, v in NON_LINEAR_MODELS.items() if v == data['model']][0]
         st.session_state['selected_model'] = model_display
         
-        # --- FIX: SET THE NEW FLAG TO TRIGGER PLOT IN run_god_mode ---
+        # SET THE NEW FLAG TO TRIGGER PLOT IN run_god_mode
         st.session_state['trigger_plot_on_load'] = True
         
         st.toast(f"Preset '{preset_key}' loaded! 🧪")
@@ -324,7 +325,6 @@ def handle_plotsense_explanation(fig, x_label, y_label, x_unit_label, y_unit_lab
 
 def trigger_plotsense(*args):
     """Sets flag to run PlotSense Explainer and immediately executes the handler."""
-    # args tuple: (fig, x_label, y_label, x_unit, y_unit, linear_slope, grad_unit_display, groq_key)
     
     # Simple check for the groq key from the arguments
     if not args[-1]:
@@ -333,8 +333,6 @@ def trigger_plotsense(*args):
         
     # Call the decoupled function directly, which will update the text but not force a plot redraw
     st.session_state['plotsense_explanation'] = "Generating explanation..."
-    # The actual plot update will happen only because of the state change below, 
-    # but since fig is the same, matplotlib preserves the zoom.
     handle_plotsense_explanation(*args)
 
 
@@ -342,14 +340,12 @@ def trigger_plotsense(*args):
 def calculate_simple_gradient(x_np, y_np, x_unit_symbol, y_unit_symbol):
     """Calculates the gradient using the Simple Two-Point Method (First and Last Data Points)."""
     if len(x_np) < 2:
-        # ... (error handling remains the same) ...
         return None, None, None, None, None, None, "Need at least two data points."
 
     x1, y1 = x_np[0], y_np[0]
     x2, y2 = x_np[-1], y_np[-1]
 
     if x2 == x1:
-        # ... (error handling remains the same) ...
         return None, None, None, None, None, None, "Cannot calculate gradient: X values are identical (vertical line)."
 
     manual_grad = (y2 - y1) / (x2 - x1)
@@ -379,7 +375,6 @@ def fit_non_linear(x_np, y_np, model_key, all_grad_info):
     model_name_display = [k for k, v in NON_LINEAR_MODELS.items() if v == model_key][0]
     
     try:
-        # ... (p0 initialization remains the same) ...
         p0 = None
         if model_key == "power":
             if np.any(x_np <= 0):
@@ -464,6 +459,7 @@ def data_input_sidebar_god():
         st.markdown("Enter comma-separated numbers.")
 
         st.subheader("X-Axis")
+        # Use initial values if keys don't exist yet (Streamlit handles this implicitly now)
         x_label = st.text_input("X-axis Label", value="Time", key=f"{mode_name}_x_label")
         x_unit = st.selectbox("X-axis Unit", options=PHYSICS_UNITS, index=1, key=f"{mode_name}_x_unit_select")
         x_input = st.text_input("Enter X values", value="1, 2, 3, 4, 5", key=f"{mode_name}_x_input")
@@ -498,9 +494,8 @@ def data_input_sidebar_god():
         chat_placeholder = st.empty()
         with chat_placeholder.container():
             # Only display the last few messages for space efficiency
+            # FIX: st.session_state['chat_history'] is now guaranteed to exist due to early init.
             for message in st.session_state['chat_history'][-5:]:
-                role = "👤 You" if message["role"] == "user" else "🤖 Tutor"
-                # Use st.chat_message for a native look
                 st.chat_message(message["role"]).write(message['content'])
         
         # Chat input field (uses the new on_change handler)
@@ -551,7 +546,6 @@ def plot_god_graph(x_str, y_str, x_label, y_label, x_unit_label, y_unit_label, s
     x_np, y_np = np.array(x_values), np.array(y_values)
     
     # Create a NEW figure if the state requires a complete redraw
-    # NOTE: We only redraw when input data or fit choice changes (show_gradient=True)
     if st.session_state.get('fig') is not None:
         plt.close(st.session_state['fig'])
         
@@ -645,11 +639,9 @@ def plot_god_graph(x_str, y_str, x_label, y_label, x_unit_label, y_unit_label, s
     elif ax.get_legend():
         ax.get_legend().remove()
         
-    # No PlotSense logic here! The figure is complete.
-        
     return fig, grad_unit_display
 
-# --- Main Run Function (FIXED) ---
+# --- Main Run Function ---
 def run_god_mode():
     """Main function to run the God Mode UI and logic."""
     global GROQ_API_KEY_INPUT 
@@ -660,7 +652,7 @@ def run_god_mode():
     # 1. Get inputs from sidebar
     x_input, y_input, x_label, y_label, x_unit, y_unit, plot_button, selected_model_key = data_input_sidebar_god()
     
-    # 2. FIX: Check for the button click OR the manual gradient state OR the new plot trigger flag
+    # 2. Check for the button click OR the manual gradient state OR the new plot trigger flag
     if plot_button or st.session_state.get('show_gradient') or st.session_state.get('trigger_plot_on_load'):
         
         loading_placeholder = st.empty()
@@ -678,7 +670,7 @@ def run_god_mode():
             st.session_state['plotted'] = False
 
         st.session_state['show_gradient'] = False
-        st.session_state['trigger_plot_on_load'] = False # FIX: Reset the trigger flag
+        st.session_state['trigger_plot_on_load'] = False # Reset the trigger flag
         loading_placeholder.empty()
     
     # 3. Display plot and output
@@ -734,13 +726,10 @@ def run_god_mode():
         st.markdown("---")
         
         if st.session_state.get('plotsense_explanation'): 
-            st.markdown("## PlotSense AI Interpretation 🧠")
+            st.markdown("## PlotSense AI Interpretation 🧠 (Powered by Groq)")
             st.markdown(st.session_state['plotsense_explanation'])
             st.markdown("---")
         
         if st.session_state['gradient_markdown']:
             st.markdown(st.session_state['gradient_markdown'], unsafe_allow_html=True)
             st.markdown("---")
-
-    elif not st.session_state['plotted']:
-        st.info("Enter your data in the sidebar and click 'Plot Data' to begin. 👆")
