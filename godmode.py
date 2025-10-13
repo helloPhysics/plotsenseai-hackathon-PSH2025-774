@@ -65,8 +65,8 @@ if 'uploaded_x_column' not in st.session_state:
     st.session_state['uploaded_x_column'] = None
 if 'uploaded_y_column' not in st.session_state:
     st.session_state['uploaded_y_column'] = None
-if st.session_state['uploaded_data_df'] is not None:
-    pass # FIX: Added 'pass' to complete the incomplete 'if' block
+if st.session_state.get('uploaded_data_df') is not None: # FIX: Used .get() to avoid KeyError if key is accessed prematurely
+    pass # Added 'pass' to complete the incomplete 'if' block
 
 
 # ------------------------------------------------------------------------------
@@ -568,7 +568,7 @@ def trigger_plotsense(*args):
 def get_data_arrays(x_str, y_str):
     """Helper to parse data inputs and handle errors (ONLY for Manual/Preset data)."""
     
-    if st.session_state['uploaded_data_df'] is not None and st.session_state['display_mode'] == 'file':
+    if st.session_state.get('uploaded_data_df') is not None and st.session_state.get('display_mode') == 'file':
         # If we are in file mode, the data is already in st.session_state['last_x_np']
         if st.session_state['last_x_np'].size > 0:
             return st.session_state['last_x_np'], st.session_state['last_y_np']
@@ -695,14 +695,6 @@ def calculate_simple_gradient(x_np, y_np, x_unit_symbol, y_unit_symbol):
     elif not y_unit_symbol: grad_unit_display = f"$\\frac{{1}}{{{x_unit_symbol}}}$"
     else: grad_unit_display = f"$\\frac{{{y_unit_symbol}}}{{{x_unit_symbol}}}$"
 
-    # --- GRADIENT ANALYSIS DATAFRAME (Two-Point) ---
-    data = {
-        'Point': ['**$P_1$ (First)**', '**$P_2$ (Last)**', '**Difference**', f'**Gradient ($m$) {grad_unit_display}**'],
-        'X-Value ($x$)': [f'**{x1:.4g}**', f'**{x2:.4g}**', f'**{x2 - x1:.4g}**', ''],
-        'Y-Value ($y$)': [f'**{y1:.4g}**', f'**{y2:.4g}**', f'**{y2 - y1:.4g}**', f'**{y2 - y1:.4g}**', f'**{manual_grad:.4f}**'], # Original had two extra values, fixed.
-        'Y-Value ($y$)': [f'**{y1:.4g}**', f'**{y2:.4g}**', f'**{y2 - y1:.4g}**', f'**{manual_grad:.4f}**'], # Recalculating the column
-    }
-    
     # Corrected dictionary structure for pandas DataFrame creation
     data = {
         'Point': ['**$P_1$ (First)**', '**$P_2$ (Last)**', '**Difference**', f'**Gradient ($m$) {grad_unit_display}**'],
@@ -829,7 +821,7 @@ def data_input_sidebar_god():
         )
 
         # If a file is uploaded and processed, show column selection
-        if st.session_state['uploaded_data_df'] is not None:
+        if st.session_state.get('uploaded_data_df') is not None:
             df = st.session_state['uploaded_data_df']
             column_options = df.columns.tolist()
             st.caption(f"File: **{uploaded_file.name}** loaded with {len(column_options)} columns.")
@@ -859,7 +851,7 @@ def data_input_sidebar_god():
             plot_button = st.button("Update Plot from File Data", on_click=update_uploaded_data, type="secondary")
             
             # Set mode to file if data is present
-            if st.session_state['uploaded_data_df'] is not None:
+            if st.session_state.get('uploaded_data_df') is not None:
                 st.session_state['display_mode'] = 'file'
 
             st.markdown("---")
@@ -867,7 +859,7 @@ def data_input_sidebar_god():
         # --- MANUAL/PRESET LOADER ---
         
         # We only show the preset/manual entry block if no file is currently loaded
-        if st.session_state['uploaded_data_df'] is None:
+        if st.session_state.get('uploaded_data_df') is None:
             st.session_state['display_mode'] = 'manual'
             
             st.subheader("OR Load Preset / Manual Entry")
@@ -915,7 +907,7 @@ def data_input_sidebar_god():
         
         with col_p:
             # Only show plot button if not in file mode (file mode uses 'Update Plot')
-            if st.session_state['uploaded_data_df'] is None:
+            if st.session_state.get('uploaded_data_df') is None:
                  pass # Plot button is defined above for manual mode
             else:
                  pass # Plot button for file mode is defined above as 'Update Plot'
@@ -944,7 +936,7 @@ def data_input_sidebar_god():
 
     # In file mode, the plot button state is handled differently. We must return a single boolean.
     plot_trigger = plot_button or st.session_state.get('trigger_plot_on_load')
-    if st.session_state['uploaded_data_df'] is not None and st.session_state['uploaded_x_column'] is not None and st.session_state['uploaded_y_column'] is not None:
+    if st.session_state.get('uploaded_data_df') is not None and st.session_state.get('uploaded_x_column') is not None and st.session_state.get('uploaded_y_column') is not None:
         st.session_state['display_mode'] = 'file'
         x_input = "file_data"
         y_input = "file_data"
