@@ -9,10 +9,6 @@ import os
 import math 
 import pandas as pd 
 
-import pandas as pd
-import numpy as np
-# ... (Ensure all other necessary imports like streamlit are at the top)
-
 # ------------------------------------------------------------------------------
 # ⭐ SESSION STATE INITIALIZATION MUST BE AT THE VERY TOP ⭐
 # ------------------------------------------------------------------------------
@@ -33,9 +29,9 @@ if 'preset_select' not in st.session_state:
 if 'best_fit_equation' not in st.session_state:
     st.session_state['best_fit_equation'] = ""
 if 'linear_r_squared' not in st.session_state:
-    st.session_state['linear_r_squared'] = None # Changed from 0.0 for cleaner initial state
+    st.session_state['linear_r_squared'] = 0.0
 if 'linear_slope_for_ai' not in st.session_state:
-    st.session_state['linear_slope_for_ai'] = None # Changed from 0.0 for cleaner initial state
+    st.session_state['linear_slope_for_ai'] = 0.0
 if 'trigger_plot_on_load' not in st.session_state:
     st.session_state['trigger_plot_on_load'] = False
 if 'run_plotsense_explainer' not in st.session_state:
@@ -69,9 +65,10 @@ if 'uploaded_x_column' not in st.session_state:
     st.session_state['uploaded_x_column'] = None
 if 'uploaded_y_column' not in st.session_state:
     st.session_state['uploaded_y_column'] = None
+if st.session_state['uploaded_data_df'] is not None:
+    pass # FIX: Added 'pass' to complete the incomplete 'if' block
 
 
-# ------------------------------------------------------------------------------
 # ------------------------------------------------------------------------------
 
 
@@ -108,7 +105,7 @@ NON_LINEAR_MODELS = {
     "Quadratic: y = a*x^2 + b*x + c": "quadratic",
 }
 
-# --- DATA GENERATOR FUNCTION (Noise Injection) ---
+# --- DATA GENERATOR FUNCTION (Stimulates real experiments) ---
 def generate_data_with_noise(base_x, base_y_formula, noise_std_dev):
     """
     Generates X data, calculates base Y, and adds random noise.
@@ -224,10 +221,6 @@ MODEL_FUNCTIONS = {
     "exponential": exponential_func,
     "quadratic": quadratic_func
 }
-
-# ------------------------------------------------------------------------------
-
-
 # --- Helper Functions (Local to this mode) ---
 def clear_inputs_local(clear_data=True):
     """Clears the plot state for this mode, and optionally the data inputs."""
@@ -332,7 +325,7 @@ def load_preset_data():
         st.session_state['display_mode'] = 'manual'
 
 
-# --- FILE UPLOADER HANDLERS (NEW) ---
+# --- FILE UPLOADER HANDLERS ---
 
 def handle_file_upload(uploaded_file):
     """Reads CSV or Excel file into a pandas DataFrame and stores it."""
@@ -706,6 +699,14 @@ def calculate_simple_gradient(x_np, y_np, x_unit_symbol, y_unit_symbol):
     data = {
         'Point': ['**$P_1$ (First)**', '**$P_2$ (Last)**', '**Difference**', f'**Gradient ($m$) {grad_unit_display}**'],
         'X-Value ($x$)': [f'**{x1:.4g}**', f'**{x2:.4g}**', f'**{x2 - x1:.4g}**', ''],
+        'Y-Value ($y$)': [f'**{y1:.4g}**', f'**{y2:.4g}**', f'**{y2 - y1:.4g}**', f'**{y2 - y1:.4g}**', f'**{manual_grad:.4f}**'], # Original had two extra values, fixed.
+        'Y-Value ($y$)': [f'**{y1:.4g}**', f'**{y2:.4g}**', f'**{y2 - y1:.4g}**', f'**{manual_grad:.4f}**'], # Recalculating the column
+    }
+    
+    # Corrected dictionary structure for pandas DataFrame creation
+    data = {
+        'Point': ['**$P_1$ (First)**', '**$P_2$ (Last)**', '**Difference**', f'**Gradient ($m$) {grad_unit_display}**'],
+        'X-Value ($x$)': [f'**{x1:.4g}**', f'**{x2:.4g}**', f'**{x2 - x1:.4g}**', ''],
         'Y-Value ($y$)': [f'**{y1:.4g}**', f'**{y2:.4g}**', f'**{y2 - y1:.4g}**', f'**{manual_grad:.4f}**'],
     }
     simple_grad_df = pd.DataFrame(data).set_index('Point')
@@ -818,7 +819,7 @@ def data_input_sidebar_god():
             st.caption(f"Model: `{PLOTSENSE_MODEL}`. Get key from [Groq Console](https://console.groq.com/keys).")
             st.markdown("---")
 
-        # --- FILE UPLOADER (NEW) ---
+        # --- FILE UPLOADER ---
         st.subheader("📁 Upload Data File")
         uploaded_file = st.file_uploader(
             "Upload CSV or Excel (XLSX/XLS)",
@@ -837,14 +838,14 @@ def data_input_sidebar_god():
             x_col = st.selectbox(
                 "Select X Column",
                 options=column_options,
+                index=column_options.index(st.session_state.get('uploaded_x_column', column_options[0])) if st.session_state.get('uploaded_x_column') in column_options else 0,
                 key='uploaded_x_column',
-                index=column_options.index(st.session_state.get('uploaded_x_column', column_options[0])) if st.session_state.get('uploaded_x_column') in column_options else 0
             )
             y_col = st.selectbox(
                 "Select Y Column",
                 options=column_options,
+                index=column_options.index(st.session_state.get('uploaded_y_column', column_options[1] if len(column_options) > 1 else column_options[0])) if st.session_state.get('uploaded_y_column') in column_options else (1 if len(column_options) > 1 else 0),
                 key='uploaded_y_column',
-                index=column_options.index(st.session_state.get('uploaded_y_column', column_options[1] if len(column_options) > 1 else column_options[0])) if st.session_state.get('uploaded_y_column') in column_options else (1 if len(column_options) > 1 else 0)
             )
             
             # Update the labels immediately based on selection (for graph title)
@@ -1084,7 +1085,7 @@ def run_god_mode():
     """Main function to run the God Mode UI and logic."""
     global GROQ_API_KEY_INPUT 
     
-    st.markdown("# ⚙️ GraPhycs God Mode")
+    st.markdown("# GraPhycs - God Mode")
     st.warning("This tool performs data plotting, **Non-Linear Curve Fitting**, and **Linear Analysis** based on manual entry or **uploaded data**.")
     
     # 1. Get inputs from sidebar
