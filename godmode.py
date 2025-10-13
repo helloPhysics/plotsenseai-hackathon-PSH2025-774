@@ -65,6 +65,8 @@ if 'uploaded_x_column' not in st.session_state:
     st.session_state['uploaded_x_column'] = None
 if 'uploaded_y_column' not in st.session_state:
     st.session_state['uploaded_y_column'] = None
+if st.session_state['uploaded_data_df'] is not None:
+
 
 # ------------------------------------------------------------------------------
 
