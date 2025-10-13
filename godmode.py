@@ -10,7 +10,7 @@ import math
 import pandas as pd 
 
 # ------------------------------------------------------------------------------
-# ⭐ CRITICAL FIX: SESSION STATE INITIALIZATION MUST BE AT THE VERY TOP ⭐
+# ⭐ SESSION STATE INITIALIZATION MUST BE AT THE VERY TOP ⭐
 # ------------------------------------------------------------------------------
 if 'app_page' not in st.session_state:
     st.session_state['app_page'] = 'god'
