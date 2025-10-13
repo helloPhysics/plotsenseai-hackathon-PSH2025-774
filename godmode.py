@@ -9,6 +9,10 @@ import os
 import math 
 import pandas as pd 
 
+import pandas as pd
+import numpy as np
+# ... (Ensure all other necessary imports like streamlit are at the top)
+
 # ------------------------------------------------------------------------------
 # ⭐ CRITICAL FIX: SESSION STATE INITIALIZATION MUST BE AT THE VERY TOP ⭐
 # ------------------------------------------------------------------------------
@@ -29,9 +33,9 @@ if 'preset_select' not in st.session_state:
 if 'best_fit_equation' not in st.session_state:
     st.session_state['best_fit_equation'] = ""
 if 'linear_r_squared' not in st.session_state:
-    st.session_state['linear_r_squared'] = 0.0
+    st.session_state['linear_r_squared'] = None
 if 'linear_slope_for_ai' not in st.session_state:
-    st.session_state['linear_slope_for_ai'] = 0.0
+    st.session_state['linear_slope_for_ai'] = None
 if 'trigger_plot_on_load' not in st.session_state:
     st.session_state['trigger_plot_on_load'] = False
 if 'run_plotsense_explainer' not in st.session_state:
@@ -58,13 +62,25 @@ if 'linear_reg_df' not in st.session_state:
     st.session_state['linear_reg_df'] = None
 if 'non_linear_md' not in st.session_state:
     st.session_state['non_linear_md'] = ""
-if 'uploaded_data_df' not in st.session_state:
-    st.session_state['uploaded_data_df'] = None
-# --- NEW: Store selected column names
-if 'uploaded_x_column' not in st.session_state:
-    st.session_state['uploaded_x_column'] = None
-if 'uploaded_y_column' not in st.session_state:
-    st.session_state['uploaded_y_column'] = None
+if 'non_linear_df' not in st.session_state:
+    st.session_state['non_linear_df'] = None
+    
+# ⭐ CRITICAL FIX: Use the correct data key and initialize the DataFrame structure
+if 'data_df' not in st.session_state: 
+    st.session_state['data_df'] = pd.DataFrame({'X': [], 'Y': [], 'X Error': [], 'Y Error': []})
+# Column mapping key (replaces uploaded_x_column/uploaded_y_column)
+if 'column_mapping' not in st.session_state:
+    st.session_state['column_mapping'] = {'X': 'X', 'Y': 'Y', 'X_err': None, 'Y_err': None} 
+
+# Keys for Non-Linear Fitting and Upload Status
+if 'fit_params' not in st.session_state:
+    st.session_state['fit_params'] = {}
+if 'fit_equation_func' not in st.session_state:
+    st.session_state['fit_equation_func'] = None
+if 'fit_r_squared' not in st.session_state:
+    st.session_state['fit_r_squared'] = None
+if 'uploaded_file_name' not in st.session_state:
+    st.session_state['uploaded_file_name'] = None
 
 # ------------------------------------------------------------------------------
 
