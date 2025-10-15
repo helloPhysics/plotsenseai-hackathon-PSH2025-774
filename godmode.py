@@ -1094,7 +1094,7 @@ def run_god_mode():
     """Main function to run the God Mode UI and logic."""
     global GROQ_API_KEY_INPUT 
     
-    st.markdown("# ⚙️ GraPhycs God Mode")
+    st.markdown("## ⚙️ GraPhycs God Mode")
     st.warning("This tool performs data plotting, **Non-Linear Curve Fitting**, and **Linear Analysis** based on manual entry or **uploaded data**.")
     
     # 1. Get inputs from sidebar

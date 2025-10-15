@@ -1,18 +1,38 @@
 import streamlit as st
-from basic import run_basic_mode
-from godmode import run_god_mode
 
-# --- UNCONDITIONAL GLOBAL SESSION STATE INITIALIZATION ---
-# This block is consolidated and placed at the very top.
-# It ensures all necessary keys are set before any functions or imported code runs.
+# --- Global Placeholders for Imports (Defined here in case external files don't exist yet) ---
+# NOTE: If your external files (basic.py, godmode.py) are missing or error out, 
+# these simple placeholders will allow the main app to run and display the selector.
+def placeholder_basic_mode():
+    st.header("Basic Mode 🧪")
+    st.info("This is the Basic Plotting Mode. If you see this, ensure your 'basic.py' file is present and correct.")
+    st.button("Return to Selector", on_click=lambda: switch_page('selector'))
 
-# Default page is 'selector' to show the mode choice screen
+def placeholder_god_mode():
+    st.header("God Mode 🔬")
+    st.info("This is the Advanced Plotting Mode. If you see this, ensure your 'godmode.py' file is present and correct.")
+    st.button("Return to Selector", on_click=lambda: switch_page('selector'))
+
+try:
+    # Attempt to import the real functions
+    from basic import run_basic_mode
+    from godmode import run_god_mode
+except ImportError:
+    # If import fails, use the placeholders
+    st.warning("Could not import 'basic.py' or 'godmode.py'. Using placeholder modes.")
+    run_basic_mode = placeholder_basic_mode
+    run_god_mode = placeholder_god_mode
+
+# ----------------------------------------------------------------------
+# ⭐ CRITICAL: UNCONDITIONAL GLOBAL SESSION STATE INITIALIZATION ⭐
+# All keys accessed by ALL modes MUST be initialized here to prevent KeyError.
+# ----------------------------------------------------------------------
+
+# --- Core App Flow State ---
 if 'app_page' not in st.session_state:
     st.session_state['app_page'] = 'selector' 
 
-# Initialize keys used by the main app or the modes
-if 'chat_history' not in st.session_state:
-    st.session_state['chat_history'] = [] 
+# --- Shared Plotting State ---
 if 'fig' not in st.session_state:
     st.session_state['fig'] = None
 if 'plotted' not in st.session_state:
@@ -21,36 +41,62 @@ if 'show_gradient' not in st.session_state:
     st.session_state['show_gradient'] = False
 if 'gradient_markdown' not in st.session_state:
     st.session_state['gradient_markdown'] = ""
-# Add any other global keys here (e.g., from basic.py or godmode.py)
+if 'last_x_np' not in st.session_state:
+    st.session_state['last_x_np'] = [] # Use list/placeholder instead of np.array here
+if 'last_y_np' not in st.session_state:
+    st.session_state['last_y_np'] = []
+
+# --- God Mode/Advanced Features State (FIXING THE KEYERROR) ---
+if 'uploaded_data_df' not in st.session_state:
+    st.session_state['uploaded_data_df'] = None
+if 'uploaded_x_column' not in st.session_state:
+    st.session_state['uploaded_x_column'] = None
+if 'uploaded_y_column' not in st.session_state:
+    st.session_state['uploaded_y_column'] = None
+if 'chat_history' not in st.session_state:
+    st.session_state['chat_history'] = [] 
+if 'selected_model' not in st.session_state:
+    st.session_state['selected_model'] = "None / Linear Regression"
+if 'best_fit_equation' not in st.session_state:
+    st.session_state['best_fit_equation'] = ""
+if 'trigger_plot_on_load' not in st.session_state:
+    st.session_state['trigger_plot_on_load'] = False
+if 'display_mode' not in st.session_state:
+    st.session_state['display_mode'] = 'manual' 
+if 'preset_select' not in st.session_state:
+    st.session_state['preset_select'] = "Manual Input"
+# Add any other keys used in basic.py or godmode.py here!
+
+# ----------------------------------------------------------------------
 
 # --- Configuration and Initial Display ---
 st.set_page_config(page_title="GraPhycs3", layout="wide")
 
-# This image will display once at the top of the entire application.
-st.image("assets/GraPhycs.png", width=1000)
-
-st.title("Graphycs 📊")
+# Use a placeholder header since I don't have the image file
+st.markdown("<h1 style='text-align: center; font-size: 3em;'>GraPhycs 📊</h1>", unsafe_allow_html=True)
 st.subheader("Physics Experiment Data Graph Plotter")
 
 # --- Helper Functions ---
 
 def clear_inputs():
     """Clears the plot state and resets gradient state."""
-    # Ensure this only clears generic/shared state
+    # This function clears the shared state variables when switching modes.
     st.session_state['fig'] = None
     st.session_state['plotted'] = False
     st.session_state['show_gradient'] = False
     st.session_state['gradient_markdown'] = ""
-    # st.toast("Input fields and plot state cleared! 🗑️") # Removed toast to avoid running on every switch
+    st.session_state['chat_history'] = []
+    # Note: We don't clear data inputs like God_x_input here, as that is mode-specific.
 
 def switch_page(page_name):
     """Function to switch the view/page."""
-    # This is the critical function that changes the view
     st.session_state['app_page'] = page_name
     clear_inputs()  # Clear any previous plot state when switching mode
     st.rerun() # Forces a rerun to immediately display the new page
 
-# --- Mode Selector (Launcher) ---
+# ----------------------------------------------------------------------
+## Mode Selector (Launcher)
+# ----------------------------------------------------------------------
 
 def mode_selector():
     """Displays the initial screen for mode selection."""
@@ -68,7 +114,6 @@ def mode_selector():
         * Calculates the **Manual Two-Point Gradient** using the furthest data points.
         * Shows step-by-step working and formula.
         """)
-        # Ensure the on_click uses the switch_page function
         st.button("Launch Basic Mode", on_click=lambda: switch_page('basic'), type="primary", use_container_width=True)
 
     with col2:
@@ -81,13 +126,13 @@ def mode_selector():
         * **Preset Experiment Loader:** Load classic physics data (e.g., Simple Pendulum).
         * **PlotSense AI Explainer (Groq):** Provides in-depth physics analysis, compares fitted gradient to theoretical values, and calculates error.
         """)
-        # Ensure the on_click uses the switch_page function
         st.button("Launch God Mode", on_click=lambda: switch_page('god'), type="secondary", use_container_width=True)
     st.markdown("---")
 
 
-# --- Main App Execution Router ---
-# This block reads the session state and calls the appropriate function.
+# ----------------------------------------------------------------------
+## Main App Execution Router
+# ----------------------------------------------------------------------
 
 if st.session_state['app_page'] == 'selector':
     mode_selector()
