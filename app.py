@@ -1,5 +1,6 @@
 import streamlit as st
 
+st.image("GraPhycs.png", width=1000)
 # --- Global Placeholders for Imports (Defined here in case external files don't exist yet) ---
 # NOTE: If your external files (basic.py, godmode.py) are missing or error out, 
 # these simple placeholders will allow the main app to run and display the selector.
@@ -72,8 +73,12 @@ if 'preset_select' not in st.session_state:
 # --- Configuration and Initial Display ---
 st.set_page_config(page_title="GraPhycs3", layout="wide")
 
-# Use a placeholder header since I don't have the image file
-st.markdown("<h1 style='text-align: center; font-size: 3em;'>GraPhycs 📊</h1>", unsafe_allow_html=True)
+# The original st.image was removed because the asset was unavailable in this environment.
+# If running locally and 'assets/GraPhycs.png' exists, uncomment the line below:
+# st.image("assets/GraPhycs.png", width=1000)
+
+# Using a text placeholder instead:
+st.markdown("# GraPhycs3 📊")
 st.subheader("Physics Experiment Data Graph Plotter")
 
 # --- Helper Functions ---

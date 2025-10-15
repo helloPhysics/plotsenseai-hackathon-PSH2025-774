@@ -60,11 +60,22 @@ if 'non_linear_md' not in st.session_state:
     st.session_state['non_linear_md'] = ""
 if 'uploaded_data_df' not in st.session_state:
     st.session_state['uploaded_data_df'] = None
-# --- NEW: Store selected column names
 if 'uploaded_x_column' not in st.session_state:
     st.session_state['uploaded_x_column'] = None
 if 'uploaded_y_column' not in st.session_state:
     st.session_state['uploaded_y_column'] = None
+if 'chat_history' not in st.session_state:
+    st.session_state['chat_history'] = [] 
+if 'selected_model' not in st.session_state:
+    st.session_state['selected_model'] = "None / Linear Regression"
+if 'best_fit_equation' not in st.session_state:
+    st.session_state['best_fit_equation'] = ""
+if 'trigger_plot_on_load' not in st.session_state:
+    st.session_state['trigger_plot_on_load'] = False
+if 'display_mode' not in st.session_state:
+    st.session_state['display_mode'] = 'manual' 
+if 'preset_select' not in st.session_state:
+    st.session_state['preset_select'] = "Manual Input"
 
 # ------------------------------------------------------------------------------
 
@@ -147,7 +158,7 @@ PRESET_EXPERIMENTS = {
         ),
         'transformation_notes': "Plotting $V$ vs $I$ is a direct linear relationship."
     },
-    "Hooke's Law (Force vs Extension) 🪝": {
+    "Hooke's Law (Force vs Extension)": {
         'x_label': 'Extension (e)', 'x_unit': 'Length (m)', 'y_label': 'Applied Force (F)', 'y_unit': 'Force (N)',
         'model': 'linear', 'theoretical_grad': 25.0,
         'context': "The gradient of this linear plot represents the **Spring Constant (k)** in $\\text{N/m}$.",
@@ -156,7 +167,7 @@ PRESET_EXPERIMENTS = {
         ),
         'transformation_notes': "Plotting $F$ vs $e$ is a direct linear relationship."
     },
-    "Determination of Focal Length (1/u vs 1/v) 🔎": {
+    "Determination of Focal Length (1/u vs 1/v)": {
         'x_label': 'Reciprocal of Object Distance (1/u)', 'x_unit': 'Length (m)', 'y_label': 'Reciprocal of Image Distance (1/v)', 'y_unit': 'Length (m)', 
         'model': 'linear', 'theoretical_grad': -1.0, 
         'context': "The **y-intercept is equal to $\\frac{1}{f}$**, where $f$ is the focal length in meters.",
@@ -167,7 +178,7 @@ PRESET_EXPERIMENTS = {
         'base_x_data_formula': lambda x: 1.0 / x, 'original_data_formula': lambda y: 1.0 / y, 
         'transformation_notes': "Plotting $\\frac{1}{v}$ vs $\\frac{1}{u}$ is a required linearization."
     },
-    "Refractive Index of Glass (sin i vs sin r) 🌈": {
+    "Refractive Index of Glass (sin i vs sin r) ": {
         'x_label': 'Sine of Angle of Refraction (sin r)', 'x_unit': 'None', 'y_label': 'Sine of Angle of Incidence (sin i)', 'y_unit': 'None',
         'model': 'linear', 'theoretical_grad': 1.5,
         'context': "The **gradient of the line represents the refractive index (n)** of the glass block.",
@@ -178,7 +189,7 @@ PRESET_EXPERIMENTS = {
         'base_x_data_formula': lambda x: np.degrees(np.arcsin(x)), 'original_data_formula': lambda y: np.degrees(np.arcsin(y)), 
         'transformation_notes': "Plotting $\\sin i$ vs $\\sin r$ is a direct linear relationship from Snell's law."
     },
-    "Specific Heat Capacity (E vs ΔT) 🔥": {
+    "Specific Heat Capacity (E vs ΔT) ": {
         'x_label': 'Temperature Change (ΔT)', 'x_unit': 'Temperature (°C)', 'y_label': 'Electrical Energy Supplied (E)', 'y_unit': 'Energy (J)',
         'model': 'linear', 'theoretical_grad': 500.0,
         'context': "The gradient is equal to the product of the **mass (m)** and the **specific heat capacity (c)** of the solid ($m \\cdot c$).",
@@ -187,7 +198,7 @@ PRESET_EXPERIMENTS = {
         ),
         'transformation_notes': "Plotting $E$ vs $\\Delta T$ is a direct linear relationship."
     },
-    "Potentiometer (Internal Resistance) 🔋": {
+    "Potentiometer (Internal Resistance) ": {
         'x_label': 'Current (I)', 'x_unit': 'Current (A)', 'y_label': 'Terminal Potential Difference (V)', 'y_unit': 'Voltage (V)',
         'model': 'linear', 'theoretical_grad': -1.0, 
         'context': "The **y-intercept is the EMF (E)**, and the **gradient is the negative of the internal resistance ($-r$)**.",
