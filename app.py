@@ -1,6 +1,5 @@
 import streamlit as st
 
-st.image("GraPhycs.png", width=1000)
 # --- Global Placeholders for Imports (Defined here in case external files don't exist yet) ---
 # NOTE: If your external files (basic.py, godmode.py) are missing or error out, 
 # these simple placeholders will allow the main app to run and display the selector.
@@ -66,6 +65,18 @@ if 'display_mode' not in st.session_state:
     st.session_state['display_mode'] = 'manual' 
 if 'preset_select' not in st.session_state:
     st.session_state['preset_select'] = "Manual Input"
+    
+# ADDED FIX: Keys required for PlotSense AI feature
+if 'plotsense_explanation' not in st.session_state:
+    st.session_state['plotsense_explanation'] = ""
+if 'run_plotsense_explainer' not in st.session_state:
+    st.session_state['run_plotsense_explainer'] = False
+if 'plotsense_recommendation' not in st.session_state:
+    st.session_state['plotsense_recommendation'] = None
+if 'plotsense_recommended_fig' not in st.session_state:
+    st.session_state['plotsense_recommended_fig'] = None
+if 'plotsense_recommendation_analysis' not in st.session_state:
+    st.session_state['plotsense_recommendation_analysis'] = ""
 # Add any other keys used in basic.py or godmode.py here!
 
 # ----------------------------------------------------------------------
@@ -78,7 +89,7 @@ st.set_page_config(page_title="GraPhycs3", layout="wide")
 # st.image("assets/GraPhycs.png", width=1000)
 
 # Using a text placeholder instead:
-st.markdown("# GraPhycs3 📊")
+st.markdown("<h1 style='text-align: center; font-size: 3em;'>GraPhycs 📊</h1>", unsafe_allow_html=True)
 st.subheader("Physics Experiment Data Graph Plotter")
 
 # --- Helper Functions ---
@@ -91,13 +102,22 @@ def clear_inputs():
     st.session_state['show_gradient'] = False
     st.session_state['gradient_markdown'] = ""
     st.session_state['chat_history'] = []
+    
+    # Also clear PlotSense related outputs upon mode switch
+    st.session_state['plotsense_explanation'] = ""
+    st.session_state['run_plotsense_explainer'] = False
+    st.session_state['plotsense_recommendation'] = None
+    st.session_state['plotsense_recommended_fig'] = None
+    st.session_state['plotsense_recommendation_analysis'] = ""
+    
     # Note: We don't clear data inputs like God_x_input here, as that is mode-specific.
 
 def switch_page(page_name):
     """Function to switch the view/page."""
     st.session_state['app_page'] = page_name
     clear_inputs()  # Clear any previous plot state when switching mode
-    st.rerun() # Forces a rerun to immediately display the new page
+    # Removed st.rerun() as the widget callback handles the rerun implicitly.
+    # We rely on the Streamlit widget callback mechanism to trigger the rerun.
 
 # ----------------------------------------------------------------------
 ## Mode Selector (Launcher)
