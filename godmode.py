@@ -10,7 +10,7 @@ import math
 import pandas as pd 
 
 # ------------------------------------------------------------------------------
-# ⭐ SESSION STATE INITIALIZATION MUST BE AT THE VERY TOP ⭐
+# ⭐ CRITICAL: SESSION STATE INITIALIZATION MUST BE AT THE VERY TOP TO DEPLOY TO STREAMLIT⭐
 # ------------------------------------------------------------------------------
 if 'app_page' not in st.session_state:
     st.session_state['app_page'] = 'god'
@@ -65,9 +65,6 @@ if 'uploaded_x_column' not in st.session_state:
     st.session_state['uploaded_x_column'] = None
 if 'uploaded_y_column' not in st.session_state:
     st.session_state['uploaded_y_column'] = None
-if st.session_state.get('uploaded_data_df') is not None: # FIX: Used .get() to avoid KeyError if key is accessed prematurely
-    pass # Added 'pass' to complete the incomplete 'if' block
-
 
 # ------------------------------------------------------------------------------
 
@@ -105,7 +102,7 @@ NON_LINEAR_MODELS = {
     "Quadratic: y = a*x^2 + b*x + c": "quadratic",
 }
 
-# --- DATA GENERATOR FUNCTION (Stimulates real experiments) ---
+# --- DATA GENERATOR FUNCTION ---
 def generate_data_with_noise(base_x, base_y_formula, noise_std_dev):
     """
     Generates X data, calculates base Y, and adds random noise.
@@ -221,6 +218,7 @@ MODEL_FUNCTIONS = {
     "exponential": exponential_func,
     "quadratic": quadratic_func
 }
+
 # --- Helper Functions (Local to this mode) ---
 def clear_inputs_local(clear_data=True):
     """Clears the plot state for this mode, and optionally the data inputs."""
@@ -325,7 +323,7 @@ def load_preset_data():
         st.session_state['display_mode'] = 'manual'
 
 
-# --- FILE UPLOADER HANDLERS ---
+# --- FILE UPLOADER HANDLERS (NEW) ---
 
 def handle_file_upload(uploaded_file):
     """Reads CSV or Excel file into a pandas DataFrame and stores it."""
@@ -433,7 +431,7 @@ def update_uploaded_data():
         st.session_state['trigger_plot_on_load'] = False
 
 
-# --- AI Chat Handler Functions (Unchanged) ---
+# --- AI Chat Handler Functions ---
 def get_chat_response(user_query, groq_key, x_label, y_label, x_unit, y_unit):
     """Generates an AI response based on the user query and current graph context."""
     global PLOTSENSE_MODEL
@@ -492,7 +490,7 @@ def handle_ai_chat(x_label, y_label, x_unit, y_unit):
     st.session_state['chat_history'].append({"role": "assistant", "content": ai_response})
     st.rerun()
 
-# --- PlotSense Decoupled Handler (Unchanged) ---
+# --- PlotSense Decoupled Handler ---
 def handle_plotsense_explanation(fig, x_label, y_label, x_unit_label, y_unit_label, linear_slope, grad_unit_display, groq_key):
     """Handles the PlotSense AI call and updates the explanation in session state."""
     global PLOTSENSE_AVAILABLE
@@ -568,7 +566,7 @@ def trigger_plotsense(*args):
 def get_data_arrays(x_str, y_str):
     """Helper to parse data inputs and handle errors (ONLY for Manual/Preset data)."""
     
-    if st.session_state.get('uploaded_data_df') is not None and st.session_state.get('display_mode') == 'file':
+    if st.session_state['uploaded_data_df'] is not None and st.session_state['display_mode'] == 'file':
         # If we are in file mode, the data is already in st.session_state['last_x_np']
         if st.session_state['last_x_np'].size > 0:
             return st.session_state['last_x_np'], st.session_state['last_y_np']
@@ -602,8 +600,6 @@ def get_data_arrays(x_str, y_str):
     except ValueError:
         st.error("Invalid input. Please ensure all values are numbers and separated by commas."); return None, None
         
-# ------------------------------------------------------------------------------
-
 # --- Function to generate data as a Streamlit table/dataframe ---
 def generate_data_table_df(x_np, y_np):
     """Generates a pandas DataFrame for st.dataframe() based on data type."""
@@ -671,7 +667,6 @@ def generate_data_table_df(x_np, y_np):
     st.markdown("---")
 # ------------------------------------------------------------------------------
 
-
 # --- Core Logic Functions for God Mode ---
 def calculate_simple_gradient(x_np, y_np, x_unit_symbol, y_unit_symbol):
     """
@@ -695,7 +690,7 @@ def calculate_simple_gradient(x_np, y_np, x_unit_symbol, y_unit_symbol):
     elif not y_unit_symbol: grad_unit_display = f"$\\frac{{1}}{{{x_unit_symbol}}}$"
     else: grad_unit_display = f"$\\frac{{{y_unit_symbol}}}{{{x_unit_symbol}}}$"
 
-    # Corrected dictionary structure for pandas DataFrame creation
+    # --- GRADIENT ANALYSIS DATAFRAME (Two-Point) ---
     data = {
         'Point': ['**$P_1$ (First)**', '**$P_2$ (Last)**', '**Difference**', f'**Gradient ($m$) {grad_unit_display}**'],
         'X-Value ($x$)': [f'**{x1:.4g}**', f'**{x2:.4g}**', f'**{x2 - x1:.4g}**', ''],
@@ -790,7 +785,29 @@ def fit_non_linear(x_np, y_np, model_key):
 
 
 def data_input_sidebar_god():
-    """Sidebar for God Mode data input, now includes File Uploader."""
+    """Sidebar for God Mode data input.
+        This function creates a sidebar in a Streamlit application for data input in "God Mode".
+        It includes sections for:
+        - Groq API key input (if PLOTSENSE_AVAILABLE is True)
+        - File uploading (CSV, XLSX, XLS) with column selection
+        - Manual data entry with X and Y value inputs, labels, and unit selection
+        - Preset experiment selection
+        - Curve fitting model selection
+        - AI chat feature
+        The function manages the display mode ('file' or 'manual') based on whether a file is uploaded.
+        It also handles the logic for updating the plot based on either file data or manual input.
+        Returns:
+            tuple: A tuple containing:
+                - x_input (str): X-axis input data (either "file_data" or comma-separated values).
+                - y_input (str): Y-axis input data (either "file_data" or comma-separated values).
+                - x_label (str): X-axis label.
+                - y_label (str): Y-axis label.
+                - x_unit (str): X-axis unit.
+                - y_unit (str): Y-axis unit.
+                - plot_trigger (bool): A boolean indicating whether the plot should be updated.
+                - selected_model_key (str): The key of the selected curve fitting model.
+        """
+    """Sidebar for God Mode data input."""
     global GROQ_API_KEY_INPUT 
     mode_name = 'God'
     x_input, y_input, x_label, y_label, x_unit, y_unit = "", "", "", "", "None", "None"
@@ -821,7 +838,7 @@ def data_input_sidebar_god():
         )
 
         # If a file is uploaded and processed, show column selection
-        if st.session_state.get('uploaded_data_df') is not None:
+        if st.session_state['uploaded_data_df'] is not None:
             df = st.session_state['uploaded_data_df']
             column_options = df.columns.tolist()
             st.caption(f"File: **{uploaded_file.name}** loaded with {len(column_options)} columns.")
@@ -830,14 +847,14 @@ def data_input_sidebar_god():
             x_col = st.selectbox(
                 "Select X Column",
                 options=column_options,
-                index=column_options.index(st.session_state.get('uploaded_x_column', column_options[0])) if st.session_state.get('uploaded_x_column') in column_options else 0,
                 key='uploaded_x_column',
+                index=column_options.index(st.session_state.get('uploaded_x_column', column_options[0])) if st.session_state.get('uploaded_x_column') in column_options else 0
             )
             y_col = st.selectbox(
                 "Select Y Column",
                 options=column_options,
-                index=column_options.index(st.session_state.get('uploaded_y_column', column_options[1] if len(column_options) > 1 else column_options[0])) if st.session_state.get('uploaded_y_column') in column_options else (1 if len(column_options) > 1 else 0),
                 key='uploaded_y_column',
+                index=column_options.index(st.session_state.get('uploaded_y_column', column_options[1] if len(column_options) > 1 else column_options[0])) if st.session_state.get('uploaded_y_column') in column_options else (1 if len(column_options) > 1 else 0)
             )
             
             # Update the labels immediately based on selection (for graph title)
@@ -851,7 +868,7 @@ def data_input_sidebar_god():
             plot_button = st.button("Update Plot from File Data", on_click=update_uploaded_data, type="secondary")
             
             # Set mode to file if data is present
-            if st.session_state.get('uploaded_data_df') is not None:
+            if st.session_state['uploaded_data_df'] is not None:
                 st.session_state['display_mode'] = 'file'
 
             st.markdown("---")
@@ -859,7 +876,7 @@ def data_input_sidebar_god():
         # --- MANUAL/PRESET LOADER ---
         
         # We only show the preset/manual entry block if no file is currently loaded
-        if st.session_state.get('uploaded_data_df') is None:
+        if st.session_state['uploaded_data_df'] is None:
             st.session_state['display_mode'] = 'manual'
             
             st.subheader("OR Load Preset / Manual Entry")
@@ -883,7 +900,7 @@ def data_input_sidebar_god():
             y_unit = st.selectbox("Y-axis Unit", options=PHYSICS_UNITS, index=PHYSICS_UNITS.index(st.session_state.get(f"{mode_name}_y_unit_select", "Length (m)")) if st.session_state.get(f"{mode_name}_y_unit_select") in PHYSICS_UNITS else 2, key=f"{mode_name}_y_unit_select")
             y_input = st.text_input("Enter Y values", value="1, 4, 9, 16, 25", key=f"{mode_name}_y_input")
             
-            plot_button = st.button("Plot Data", type="primary", key=f"{mode_name}_plot_button")
+            plot_button = st.button("Plot Data/Show Gradient Plot", type="primary", key=f"{mode_name}_plot_button")
 
         # --- Unit Selection (Shared Block) ---
         else:
@@ -907,14 +924,14 @@ def data_input_sidebar_god():
         
         with col_p:
             # Only show plot button if not in file mode (file mode uses 'Update Plot')
-            if st.session_state.get('uploaded_data_df') is None:
+            if st.session_state['uploaded_data_df'] is None:
                  pass # Plot button is defined above for manual mode
             else:
                  pass # Plot button for file mode is defined above as 'Update Plot'
         
         with col_c:
             # Modified clear button to clear all data
-            st.button("Clear All", on_click=lambda: clear_inputs_local(clear_data=True), type="secondary", key=f"{mode_name}_clear_button")
+            st.button("Clear All/Reset Data", on_click=lambda: clear_inputs_local(clear_data=True), type="secondary", key=f"{mode_name}_clear_button")
         
         st.markdown("---")
 
@@ -936,7 +953,7 @@ def data_input_sidebar_god():
 
     # In file mode, the plot button state is handled differently. We must return a single boolean.
     plot_trigger = plot_button or st.session_state.get('trigger_plot_on_load')
-    if st.session_state.get('uploaded_data_df') is not None and st.session_state.get('uploaded_x_column') is not None and st.session_state.get('uploaded_y_column') is not None:
+    if st.session_state['uploaded_data_df'] is not None and st.session_state['uploaded_x_column'] is not None and st.session_state['uploaded_y_column'] is not None:
         st.session_state['display_mode'] = 'file'
         x_input = "file_data"
         y_input = "file_data"
@@ -1077,7 +1094,7 @@ def run_god_mode():
     """Main function to run the God Mode UI and logic."""
     global GROQ_API_KEY_INPUT 
     
-    st.markdown("# GraPhycs - God Mode")
+    st.markdown("# ⚙️ GraPhycs God Mode")
     st.warning("This tool performs data plotting, **Non-Linear Curve Fitting**, and **Linear Analysis** based on manual entry or **uploaded data**.")
     
     # 1. Get inputs from sidebar
@@ -1138,7 +1155,7 @@ def run_god_mode():
             with col_calc:
                 is_linear_analysis = selected_model_key == 'linear' or st.session_state.get('simple_grad_df') is not None
                 st.button(
-                    "Show Linear/Two-Point Analysis", 
+                    "Gradient", 
                     on_click=set_gradient_state_local, 
                     type="primary" if is_linear_analysis else "secondary", 
                     key='show_grad_button'
