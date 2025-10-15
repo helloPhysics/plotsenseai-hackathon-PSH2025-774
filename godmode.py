@@ -1112,7 +1112,7 @@ def run_god_mode():
     if should_run_plot_logic:
         
         loading_placeholder = plot_placeholder.container()
-        with loading_placeholder: st.markdown("**Thinking...** 🧠"); time.sleep(0.5)
+        with loading_placeholder: st.markdown("**Thinking...** 🧠"); time.sleep(0.9)
         
         # plot_god_graph returns the Matplotlib figure
         result = plot_god_graph(
