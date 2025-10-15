@@ -64,18 +64,11 @@ if 'uploaded_x_column' not in st.session_state:
     st.session_state['uploaded_x_column'] = None
 if 'uploaded_y_column' not in st.session_state:
     st.session_state['uploaded_y_column'] = None
-if 'chat_history' not in st.session_state:
-    st.session_state['chat_history'] = [] 
 if 'selected_model' not in st.session_state:
     st.session_state['selected_model'] = "None / Linear Regression"
-if 'best_fit_equation' not in st.session_state:
-    st.session_state['best_fit_equation'] = ""
-if 'trigger_plot_on_load' not in st.session_state:
-    st.session_state['trigger_plot_on_load'] = False
-if 'display_mode' not in st.session_state:
-    st.session_state['display_mode'] = 'manual' 
-if 'preset_select' not in st.session_state:
-    st.session_state['preset_select'] = "Manual Input"
+
+
+
 
 # ------------------------------------------------------------------------------
 
