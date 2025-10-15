@@ -86,10 +86,10 @@ st.set_page_config(page_title="GraPhycs3", layout="wide")
 
 # The original st.image was removed because the asset was unavailable in this environment.
 # If running locally and 'assets/GraPhycs.png' exists, uncomment the line below:
-# st.image("assets/GraPhycs.png", width=1000)
+st.image("assets/GraPhycs.png", width=1000)
 
 # Using a text placeholder instead:
-st.markdown("<h1 style='text-align: center; font-size: 3em;'>GraPhycs 📊</h1>", unsafe_allow_html=True)
+st.markdown("GraPhycs 📊")
 st.subheader("Physics Experiment Data Graph Plotter")
 
 # --- Helper Functions ---

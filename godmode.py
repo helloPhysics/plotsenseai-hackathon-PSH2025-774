@@ -72,7 +72,6 @@ if 'selected_model' not in st.session_state:
 
 # ------------------------------------------------------------------------------
 
-
 # --- Groq and PlotSense Setup ------------------------------------------------
 PLOTSENSE_MODEL = "llama-3.1-8b-instant" # Define the Groq model
 GROQ_API_KEY_INPUT = None # GLOBAL: Placeholder for the key from the sidebar
