@@ -2,16 +2,22 @@
 # Graphycs Ai
 An online Physics experiment assistant, which helps with plotting your graphs, do the neccessary calculations and helps you start a conversation with your graph using Graphycs Ai. 
 
+## Unique User ID
+PSH2025-774
 
-## Authors
-
-- [@HelloPhysics_](https://x.com/HelloPhysics_)
-
+## Tech Stack Used
+streamlit
+numpy
+matplotlib
+scipy
+groq
+pandas
+plotsense
+groq
 
 ## Demo
 
 https://youtu.be/OkMDLTGN9EA?si=t1YnF7bo-ijBJCyS
-
 
 ## Run Locally
 
