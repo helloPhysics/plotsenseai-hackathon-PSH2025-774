@@ -6,6 +6,7 @@ An online Physics experiment assistant, which helps with plotting your graphs, d
 PSH2025-774
 
 ## Tech Stack Used
+Python
 streamlit
 numpy
 matplotlib
@@ -49,20 +50,6 @@ streamlit run app.py
 
 ## Website
  https://hellophysics.github.io/GraPhycs-Web/
-## Screenshots
-
-![App Screenshot](https://ibb.co/0yqRWMf2)
-
-![App Screenshot](https://ibb.co/wFpyVCPz)
-
-![App Screenshot](https://ibb.co/wr0Czz2Z)
-
-![App Screenshot](https://ibb.co/kVXw7j26)
-
-
-## Documentation
-
-[Documentation](https://linktodocumentation)
 
 
 ## Used By
